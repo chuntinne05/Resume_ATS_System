@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume ATS System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-file-alt text-blue-600 text-2xl mr-3"></i>
+                    <h1 class="text-xl font-bold text-gray-800">Resume ATS System</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="showUploadModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-upload mr-2"></i>Upload Resumes
+                    </button>
+                    <button onclick="refreshData()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Dashboard Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Candidates</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalCandidates">0</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <i class="fas fa-users text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Approved</p>
+                        <p class="text-2xl font-bold text-green-600" id="approvedCandidates">0</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Under Review</p>
+                        <p class="text-2xl font-bold text-yellow-600" id="reviewCandidates">0</p>
+                    </div>
+                    <div class="bg-yellow-100 p-3 rounded-full">
+                        <i class="fas fa-clock text-yellow-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Average Score</p>
+                        <p class="text-2xl font-bold text-purple-600" id="averageScore">0</p>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-full">
+                        <i class="fas fa-star text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Search by name or email..."
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onkeyup="debounceSearch()"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select id="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="filterCandidates()">
+                        <option value="">All Status</option>
+                        <option value="New">New</option>
+                        <option value="Reviewed">Reviewed</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Experience Level</label>
+                    <select id="experienceFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="filterCandidates()">
+                        <option value="">All Levels</option>
+                        <option value="Entry">Entry</option>
+                        <option value="Mid">Mid</option>
+                        <option value="Senior">Senior</option>
+                        <option value="Lead">Lead</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Min Score</label>
+                    <input 
+                        type="number" 
+                        id="minScoreFilter" 
+                        placeholder="0-100"
+                        min="0" 
+                        max="100"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onchange="filterCandidates()"
+                    >
+                </div>
+            </div>
+        </div>
+
+        <!-- Candidates Table -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">Candidates</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Experience</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="candidatesTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Dynamic content -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+                <div class="text-sm text-gray-700">
+                    Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> candidates
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="prevPage()" id="prevBtn" class="px-3 py-2 bg-gray-300 text-gray-600 rounded disabled:opacity-50" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span id="pageInfo" class="px-4 py-2 text-sm text-gray-700"></span>
+                    <button onclick="nextPage()" id="nextBtn" class="px-3 py-2 bg-gray-300 text-gray-600 rounded disabled:opacity-50" disabled>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800">Upload Resumes</h3>
+                </div>
+                <div class="p-6">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Batch Name (Optional)</label>
+                        <input 
+                            type="text" 
+                            id="batchName" 
+                            placeholder="Enter batch name..."
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Files</label>
+                        <input 
+                            type="file" 
+                            id="fileInput" 
+                            multiple 
+                            accept=".pdf,.docx,.doc,.jpg,.jpeg,.png"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                        <p class="text-sm text-gray-500 mt-2">Supported formats: PDF, DOCX, DOC, JPG, JPEG, PNG</p>
+                    </div>
+                    <div id="uploadProgress" class="hidden mb-4">
+                        <div class="bg-gray-200 rounded-full h-2">
+                            <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <p id="progressText" class="text-sm text-gray-600 mt-2">Uploading...</p>
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                    <button onclick="hideUploadModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="uploadFiles()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Candidate Detail Modal -->
+    <div id="candidateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-800">Candidate Details</h3>
+                    <button onclick="hideCandidateModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="candidateDetails" class="p-6">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/dashboard.js"></script>
+    <script>
+        // Global variables
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentCandidates = [];
+        let allCandidates = [];
+        let searchTimeout;
+        const API_BASE = 'http://localhost:8000/api';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardStats();
+            loadCandidates();
+        });
+
+        // API Functions
+        async function loadDashboardStats() {
+            try {
+                const response = await axios.get(`${API_BASE}/dashboard/stats`);
+                const stats = response.data;
+                
+                document.getElementById('totalCandidates').textContent = stats.total_candidates || 0;
+                document.getElementById('approvedCandidates').textContent = stats.approved_candidates || 0;
+                document.getElementById('reviewCandidates').textContent = stats.review_candidates || 0;
+                document.getElementById('averageScore').textContent = (stats.average_score || 0).toFixed(1);
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                showNotification('Error loading dashboard stats', 'error');
+            }
+        }
+
+        async function loadCandidates() {
+            try {
+                const response = await axios.get(`${API_BASE}/candidates`, {
+                    params: {
+                        skip: (currentPage - 1) * 20,
+                        limit: 20
+                    }
+                });
+                
+                allCandidates = response.data;
+                currentCandidates = allCandidates;
+                renderCandidates(currentCandidates);
+                updatePagination();
+            } catch (error) {
+                console.error('Error loading candidates:', error);
+                showNotification('Error loading candidates', 'error');
+            }
+        }
+
+        async function loadCandidateDetails(candidateId) {
+            try {
+                const response = await axios.get(`${API_BASE}/candidates/${candidateId}`);
+                return response.data;
+            } catch (error) {
+                console.error('Error loading candidate details:', error);
+                throw error;
+            }
+        }
+
+        async function updateCandidateStatus(candidateId, status) {
+            try {
+                await axios.put(`${API_BASE}/candidates/${candidateId}/status`, null, {
+                    params: { status }
+                });
+                showNotification('Status updated successfully', 'success');
+                await loadCandidates();
+                await loadDashboardStats();
+            } catch (error) {
+                console.error('Error updating status:', error);
+                showNotification('Error updating status', 'error');
+            }
+        }
+
+        async function deleteCandidateById(candidateId) {
+            if (confirm('Are you sure you want to delete this candidate?')) {
+                try {
+                    await axios.delete(`${API_BASE}/candidates/${candidateId}`);
+                    showNotification('Candidate deleted successfully', 'success');
+                    await loadCandidates();
+                    await loadDashboardStats();
+                } catch (error) {
+                    console.error('Error deleting candidate:', error);
+                    showNotification('Error deleting candidate', 'error');
+                }
+            }
+        }
+
+        // Render Functions
+        function renderCandidates(candidates) {
+            const tbody = document.getElementById('candidatesTableBody');
+            tbody.innerHTML = '';
+
+            if (candidates.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                            No candidates found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            candidates.forEach(candidate => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                
+                const statusBadge = getStatusBadge(candidate.status);
+                const experienceBadge = getExperienceBadge(candidate.experience_level);
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${candidate.full_name || 'N/A'}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${candidate.email || 'N/A'}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${(candidate.overall_score || 0).toFixed(1)}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${experienceBadge}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${statusBadge}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${formatDate(candidate.created_at)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button onclick="viewCandidate(${candidate.id})" class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="downloadResume(${candidate.id})" class="text-green-600 hover:text-green-900">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button onclick="deleteCandidateById(${candidate.id})" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('showingCount').textContent = candidates.length;
+            document.getElementById('totalCount').textContent = allCandidates.length;
+        }
+
+        function getStatusBadge(status) {
+            const statusColors = {
+                'New': 'bg-blue-100 text-blue-800',
+                'Reviewed': 'bg-yellow-100 text-yellow-800',
+                'Approved': 'bg-green-100 text-green-800',
+                'Rejected': 'bg-red-100 text-red-800'
+            };
+            
+            const colorClass = statusColors[status] || 'bg-gray-100 text-gray-800';
+            return `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colorClass}">${status}</span>`;
+        }
+
+        function getExperienceBadge(level) {
+            const levelColors = {
+                'Entry': 'bg-blue-100 text-blue-800',
+                'Mid': 'bg-green-100 text-green-800',
+                'Senior': 'bg-purple-100 text-purple-800',
+                'Lead': 'bg-red-100 text-red-800'
+            };
+            
+            const colorClass = levelColors[level] || 'bg-gray-100 text-gray-800';
+            return `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colorClass}">${level}</span>`;
+        }
+
+        // Modal Functions
+        function showUploadModal() {
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+
+        function hideUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+            document.getElementById('fileInput').value = '';
+            document.getElementById('batchName').value = '';
+            document.getElementById('uploadProgress').classList.add('hidden');
+        }
+
+        async function viewCandidate(candidateId) {
+            try {
+                const candidate = await loadCandidateDetails(candidateId);
+                renderCandidateDetails(candidate);
+                document.getElementById('candidateModal').classList.remove('hidden');
+            } catch (error) {
+                showNotification('Error loading candidate details', 'error');
+            }
+        }
+
+        function hideCandidateModal() {
+            document.getElementById('candidateModal').classList.add('hidden');
+        }
+
+        function renderCandidateDetails(candidate) {
+            const detailsDiv = document.getElementById('candidateDetails');
+            
+            detailsDiv.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Basic Info -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 mb-3">Basic Information</h4>
+                        <div class="space-y-2">
+                            <p><strong>Name:</strong> ${candidate.full_name || 'N/A'}</p>
+                            <p><strong>Email:</strong> ${candidate.email || 'N/A'}</p>
+                            <p><strong>Phone:</strong> ${candidate.phone || 'N/A'}</p>
+                            <p><strong>Address:</strong> ${candidate.address || 'N/A'}</p>
+                            <p><strong>Score:</strong> ${(candidate.overall_score || 0).toFixed(1)}/100</p>
+                            <p><strong>Classification:</strong> ${candidate.classification || 'N/A'}</p>
+                        </div>
+                        <div class="mt-4 flex space-x-2">
+                            <select onchange="updateCandidateStatus(${candidate.id}, this.value)" class="px-3 py-1 border rounded">
+                                <option value="New" ${candidate.status === 'New' ? 'selected' : ''}>New</option>
+                                <option value="Reviewed" ${candidate.status === 'Reviewed' ? 'selected' : ''}>Reviewed</option>
+                                <option value="Approved" ${candidate.status === 'Approved' ? 'selected' : ''}>Approved</option>
+                                <option value="Rejected" ${candidate.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Skills -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 mb-3">Skills</h4>
+                        <div class="flex flex-wrap gap-2">
+                            ${candidate.skills ? candidate.skills.map(skill => 
+                                `<span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">${skill.skill_name}</span>`
+                            ).join('') : '<p class="text-gray-500">No skills found</p>'}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Experience -->
+                <div class="mt-6">
+                    <h4 class="font-semibold text-gray-800 mb-3">Experience</h4>
+                    <div class="space-y-4">
+                        ${candidate.experience ? candidate.experience.map(exp => `
+                            <div class="border-l-4 border-blue-500 pl-4">
+                                <h5 class="font-medium">${exp.job_title || 'N/A'} at ${exp.company || 'N/A'}</h5>
+                                <p class="text-sm text-gray-600">${formatDate(exp.start_date)} - ${exp.end_date ? formatDate(exp.end_date) : 'Present'}</p>
+                            </div>
+                        `).join('') : '<p class="text-gray-500">No experience found</p>'}
+                    </div>
+                </div>
+                
+                <!-- Education -->
+                <div class="mt-6">
+                    <h4 class="font-semibold text-gray-800 mb-3">Education</h4>
+                    <div class="space-y-4">
+                        ${candidate.education ? candidate.education.map(edu => `
+                            <div class="border-l-4 border-green-500 pl-4">
+                                <h5 class="font-medium">${edu.degree || 'N/A'}</h5>
+                                <p class="text-sm text-gray-600">${edu.institution || 'N/A'} - ${edu.graduation_year || 'N/A'}</p>
+                                ${edu.gpa ? `<p class="text-sm text-gray-600">GPA: ${edu.gpa}</p>` : ''}
+                            </div>
+                        `).join('') : '<p class="text-gray-500">No education found</p>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Upload Functions
+        async function uploadFiles() {
+            const fileInput = document.getElementById('fileInput');
+            const batchName = document.getElementById('batchName').value;
+            const files = fileInput.files;
+
+            if (files.length === 0) {
+                showNotification('Please select files to upload', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            for (let file of files) {
+                formData.append('files', file);
+            }
+            if (batchName) {
+                formData.append('batch_name', batchName);
+            }
+
+            try {
+                document.getElementById('uploadProgress').classList.remove('hidden');
+                document.getElementById('progressBar').style.width = '0%';
+                document.getElementById('progressText').textContent = 'Uploading...';
+
+                const response = await axios.post(`${API_BASE}/upload`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    },
+                    onUploadProgress: (progressEvent) => {
+                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        document.getElementById('progressBar').style.width = percentCompleted + '%';
+                        document.getElementById('progressText').textContent = `Uploading... ${percentCompleted}%`;
+                    }
+                });
+
+                showNotification('Files uploaded successfully', 'success');
+                hideUploadModal();
+                await loadCandidates();
+                await loadDashboardStats();
+            } catch (error) {
+                console.error('Error uploading files:', error);
+                showNotification('Error uploading files', 'error');
+            }
+        }
+
+        async function downloadResume(candidateId) {
+            try {
+                const response = await axios.get(`${API_BASE}/download/${candidateId}`, {
+                    responseType: 'blob'
+                });
+                
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `resume_${candidateId}.pdf`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            } catch (error) {
+                console.error('Error downloading resume:', error);
+                showNotification('Error downloading resume', 'error');
+            }
+        }
+
+        // Filter Functions
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                filterCandidates();
+            }, 500);
+        }
+
+        function filterCandidates() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const experienceFilter = document.getElementById('experienceFilter').value;
+            const minScore = parseFloat(document.getElementById('minScoreFilter').value) || 0;
+
+            currentCandidates = allCandidates.filter(candidate => {
+                const matchesSearch = !searchTerm || 
+                    (candidate.full_name && candidate.full_name.toLowerCase().includes(searchTerm)) ||
+                    (candidate.email && candidate.email.toLowerCase().includes(searchTerm));
+                
+                const matchesStatus = !statusFilter || candidate.status === statusFilter;
+
+                const matchesExperience = !experienceFilter || candidate.experience_level === experienceFilter;
+                
+                const matchesScore = candidate.overall_score >= minScore;
+
+                return matchesSearch && matchesStatus && matchesExperience && matchesScore;
+            });
+
+            renderCandidates(currentCandidates);
+            currentPage = 1;
+            updatePagination();
+        }
+
+        // Pagination Functions
+        function updatePagination() {
+            const itemsPerPage = 20;
+            totalPages = Math.ceil(currentCandidates.length / itemsPerPage);
+            
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+            
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+            
+            if (currentPage <= 1) {
+                prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            
+            if (currentPage >= totalPages) {
+                nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                loadCandidates();
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadCandidates();
+            }
+        }
+
+        // Utility Functions
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 transition-all duration-300 transform translate-x-full`;
+            
+            const bgColor = {
+                'success': 'bg-green-500',
+                'error': 'bg-red-500',
+                'warning': 'bg-yellow-500',
+                'info': 'bg-blue-500'
+            }[type] || 'bg-blue-500';
+            
+            notification.classList.add(bgColor);
+            notification.innerHTML = `
+                <div class="flex items-center text-white">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        function refreshData() {
+            showNotification('Refreshing data...', 'info');
+            loadDashboardStats();
+            loadCandidates();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Escape key to close modals
+            if (e.key === 'Escape') {
+                hideUploadModal();
+                hideCandidateModal();
+            }
+            
+            // Ctrl+U to open upload modal
+            if (e.ctrlKey && e.key === 'u') {
+                e.preventDefault();
+                showUploadModal();
+            }
+            
+            // Ctrl+R to refresh data
+            if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                refreshData();
+            }
+        });
+
+        // Handle modal clicks outside content
+        document.getElementById('uploadModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideUploadModal();
+            }
+        });
+
+        document.getElementById('candidateModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideCandidateModal();
+            }
+        });
+
+        // Auto-refresh data every 5 minutes
+        setInterval(() => {
+            loadDashboardStats();
+        }, 5 * 60 * 1000);
+
+        // Handle file input change for upload validation
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const files = e.target.files;
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'image/jpeg', 'image/jpg', 'image/png'];
+            
+            for (let file of files) {
+                if (file.size > maxSize) {
+                    showNotification(`File ${file.name} is too large. Maximum size is 10MB.`, 'error');
+                    e.target.value = '';
+                    return;
+                }
+                
+                if (!allowedTypes.includes(file.type)) {
+                    showNotification(`File ${file.name} has unsupported format.`, 'error');
+                    e.target.value = '';
+                    return;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

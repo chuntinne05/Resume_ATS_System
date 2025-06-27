@@ -1,0 +1,57 @@
+Trinh Tran Trung Tin
+trinhtrungtin462005@gmail.com | (+84)0849-337-228 | Di An, Binh Duong
+Personal Summary
+I’m a sophomore student majoring in Applied Artificial Intelligence (Computer Science) at HCMUT,
+with a strong passion for AI research. I enjoy exploring machine learning, building projects, and learn-
+ing how intelligent systems can solve real-world problems. Although I’m still early in my journey, I’m
+eager to grow, contribute, and gain hands-on experience in a professional environment.
+• Github : https://github.com/chuntinne05
+• LinkedIn : www.linkedin.com/in/tín-trịnh-trần-trung-24775b336
+Education
+Ho Chi Minh City University of Technology Oct 2023 – (Mar 2027)
+• Major : Computer Science GPA: 3.1/4.0 (Present year)
+• Specialization in Applied Artificial Intelligence IELTS : 6.5
+Technical Skills
+Programming Languages
+• Proficient : C/C++, Python, Java
+• Familiar : HTML/CSS, JavaScript, SQL
+Libraries and Frameworks
+• Node.js, Express.js
+• Pandas, Tensorflow, Keras, Pytorch
+Tools
+• MySQLWorkBench, Github, Docker, HuggingFace, Jupyter Notebook
+Other technical skills
+• Team & Leadership : Experienced in leading team projects in both academic and extracurricular
+settings
+• Machine Learning fundamentals
+• Transformers
+PROJECTS
+NeuroSleepAI
+Feb 2025 - (May 2025)
+Integration of EEG signals for sleep analysis and potential disease prediction, incorporated into large
+language models (LLMs)
+• Programming Languages : Python
+• Library : Pandas, mne, numpy, Tensorflow, Keras
+• Position : Leader
+• Github link : https://github.com/chuntinne05/NeuroSleep.gitThai-Han Online Market
+Feb 2025 - (Jun 2025)
+This is the online version of a store in District 12, designed with a visually appealing interface and
+user-friendly shopping experience
+• Programming Languages : HTML/CSS, JavaScript, SQL
+• Tools : Express.js, EJS, Node.js, MySQLWorkBench, n8n
+• Github link : https://github.com/chuntinne05/Ecommerc-Website.git
+Web Sao ke
+Sep 2024 - Oct 2024
+Based on data from the Vietnam Fatherland Front Committee, you can quickly and easily search for
+donor names, donation amounts, and dates.
+• Programming Languages : HTML/CSS, JavaScript
+• Tools : Express.js, EJS, Node.js
+• Position : Leader
+• https://github.com/chuntinne05/WebSaoKe.git
+Certificates
+Human Research - Data or Specimens Only Research
+CompletionCertificatelink: https://www.citiprogram.org/verify/?wad8b4e7b-c9ea-433c-bd71-819c4cb23612-
+68585797
+CITI Conflicts of Interest - Conflicts of Interest
+CompletionCertificatelink: https://www.citiprogram.org/verify/?wad8b4e7b-c9ea-433c-bd71-819c4cb23612-
+68585797 https://www.citiprogram.org/verify/?wef101ed9-d8e1-4fdd-a66a-53db2d1fd738-68585925
