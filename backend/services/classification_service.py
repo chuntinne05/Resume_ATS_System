@@ -11,16 +11,21 @@ class ClassificationService:
     
     def classify_candidate(self, candidate: Candidate, db: Session) -> Dict[str, Any]:
         """Classify candidate based on experience, education, and skills"""
-        
+        print(f"Classifying candidate ID: {candidate.id}, Name: {candidate.full_name}")
+        db.flush()
+
         # Calculate experience score
+        print("tới đây nè")
         experience_score = self._calculate_experience_score(candidate, db)
-        
+        print(f"qua được experience score với score là : {experience_score}")
+
         # Calculate education score
         education_score = self._calculate_education_score(candidate, db)
-        
+        print(f"qua được experience + education score với score là : {education_score}")
+
         # Calculate skills score
         skills_score = self._calculate_skills_score(candidate, db)
-        
+        print(f"qua được skill + experience + education score với score là : {skills_score}")
         # Calculate overall score
         weights = {
             'experience': 0.5,
@@ -33,6 +38,8 @@ class ClassificationService:
             education_score * weights['education'] +
             skills_score * weights['skills']
         )
+
+        print(f"qua được overall score là : {overall_score}")
         
         # Determine experience level
         experience_level = self._determine_experience_level(candidate, db)
@@ -54,7 +61,6 @@ class ClassificationService:
     def _calculate_experience_score(self, candidate: Candidate, db: Session) -> float:
         """Calculate experience score based on work history"""
         experiences = db.query(Experience).filter(Experience.candidate_id == candidate.id).all()
-        
         if not experiences:
             return 0.0
         
@@ -85,11 +91,12 @@ class ClassificationService:
         # Score calculation
         years_score = min(total_years / 10, 1.0) * 7  # Max 7 points for experience years
         quality_score = min(role_quality_score / len(experiences) / 3, 1.0) * 3  # Max 3 points for role quality
-        
+        print(f"quality score {quality_score}")
         return years_score + quality_score
     
     def _calculate_education_score(self, candidate: Candidate, db: Session) -> float:
         """Calculate education score"""
+        
         educations = db.query(Education).filter(Education.candidate_id == candidate.id).all()
         
         if not educations:

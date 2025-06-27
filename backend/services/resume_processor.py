@@ -205,39 +205,25 @@ class ResumeProcessor:
     def _create_candidate_from_data(self, db: Session, data: Dict[str, Any], filename: str, s3_key: str) -> Candidate:
         """Create candidate record from extracted data"""
         personal_info = data.get('personal_info', {})
-        print("có đi qua chỗ này")
 
         email = personal_info.get('email')
         candidate = None
         if email:
             candidate = db.query(Candidate).filter(Candidate.email == email).first()
-        # Create candidate
-        # candidate = Candidate(
-        #     full_name=personal_info.get('full_name', ''),
-        #     email=personal_info.get('email'),
-        #     phone=personal_info.get('phone'),
-        #     address=personal_info.get('address'),
-        #     original_filename=filename,
-        #     s3_file_key=s3_key
-        # )
 
-        print("có đi qua chỗ này à? ")
         if candidate:
-            # Update existing candidate
             print("Updating existing candidate")
             candidate.full_name = personal_info.get('full_name', candidate.full_name)
             candidate.phone = personal_info.get('phone', candidate.phone)
             candidate.address = personal_info.get('address', candidate.address)
             candidate.original_filename = filename
             candidate.s3_file_key = s3_key
-            # Delete existing related records to avoid duplicates
             db.query(Education).filter(Education.candidate_id == candidate.id).delete()
             db.query(Experience).filter(Experience.candidate_id == candidate.id).delete()
             db.query(Skill).filter(Skill.candidate_id == candidate.id).delete()
             db.query(Project).filter(Project.candidate_id == candidate.id).delete()
             db.query(Certification).filter(Certification.candidate_id == candidate.id).delete()
         else:
-            # Create new candidate
             print("Creating new candidate")
             candidate = Candidate(
                 full_name=personal_info.get('full_name', ''),
@@ -248,22 +234,22 @@ class ResumeProcessor:
                 s3_file_key=s3_key
             )
             db.add(candidate)
-        print("cái nào sai đây?")
-        db.flush()  
-        print("có đi qua chỗ này 3 ")
+        db.flush()
+        print(f"Candidate ID after flush: {candidate.id}")  
         
-        # Add education records
         for edu_data in data.get('education', []):
+            graduation_year = self._extract_year(edu_data.get('graduation_year'))
             education = Education(
                 candidate_id=candidate.id,
                 degree=edu_data.get('degree'),
                 institution=edu_data.get('institution'),
-                graduation_year=edu_data.get('graduation_year'),
+                graduation_year=graduation_year,
                 gpa=edu_data.get('gpa'),
                 major=edu_data.get('major'),
                 education_level=self._map_education_level(edu_data.get('education_level'))
             )
             db.add(education)
+        print(f"Added education: {edu_data.get('degree')} for candidate ID: {candidate.id}")
         
         # Add experience records
         for exp_data in data.get('experience', []):
@@ -278,6 +264,7 @@ class ResumeProcessor:
                 achievements=exp_data.get('achievements', [])
             )
             db.add(experience)
+        print(f"Added experience: {exp_data.get('job_title')} at {exp_data.get('company')} for candidate ID: {candidate.id}")
         
         # Add skills
         for skill_data in data.get('skills', []):
@@ -289,6 +276,7 @@ class ResumeProcessor:
                 years_experience=skill_data.get('years_experience', 0)
             )
             db.add(skill)
+        print(f"Added skill: {skill_data.get('skill_name')} for candidate ID: {candidate.id}")
         
         # Add projects
         for project_data in data.get('projects', []):
@@ -303,6 +291,7 @@ class ResumeProcessor:
                 end_date=self._parse_date(project_data.get('end_date'))
             )
             db.add(project)
+        print(f"Added project: {project_data.get('project_name')} for candidate ID: {candidate.id}")
         
         # Add certifications
         for cert_data in data.get('certifications', []):
@@ -314,7 +303,8 @@ class ResumeProcessor:
                 expiry_date=self._parse_date(cert_data.get('expiry_date'))
             )
             db.add(certification)
-        
+        print(f"Added certification: {cert_data.get('certification_name')} for candidate ID: {candidate.id}")
+        db.commit() 
         return candidate
     
     def _parse_date(self, date_str: str):
@@ -332,6 +322,26 @@ class ResumeProcessor:
                     continue
             return None
         except:
+            return None
+        
+    def _extract_year(self, year_input: Any) -> int:
+        """Extract year from various input formats"""
+        if not year_input:
+            return None
+        
+        try:
+            # If input is already an integer
+            if isinstance(year_input, int):
+                return year_input
+            
+            # Convert to string for processing
+            year_str = str(year_input)
+            
+            # Handle YYYY-MM or YYYY formats
+            if '-' in year_str:
+                return int(year_str.split('-')[0])
+            return int(year_str)
+        except (ValueError, TypeError):
             return None
     
     def _map_education_level(self, level_str: str) -> EducationLevel:

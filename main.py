@@ -306,3 +306,6 @@ async def get_batch_status(batch_id: str, db: Session = Depends(get_db)):
         "successful_files": batch.successful_files,
         "failed_files": batch.failed_files
     }
+
+
+# uvicorn main:app --reload --host 0.0.0.0 --port 8000    

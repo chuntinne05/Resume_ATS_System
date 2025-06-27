@@ -41,18 +41,18 @@ class SkillCategory(enum.Enum):
     FRAMEWORK = "Framework"
 
 class ProficiencyLevel(enum.Enum):
-    BEGINNER = "Beginner"
-    INTERMEDIATE = "Intermediate"
-    ADVANCED = "Advanced"
-    EXPERT = "Expert"
+    BEGINNER = "BEGINNER"
+    INTERMEDIATE = "INTERMEDIATE"
+    ADVANCED = "ADVANCED"
+    EXPERT = "EXPERT"
 
 class EducationLevel(enum.Enum):
-    HIGH_SCHOOL = "High School"
-    ASSOCIATE = "Associate"
-    BACHELOR = "Bachelor"
-    MASTER = "Master"
-    PHD = "PhD"
-    OTHER = "Other"
+    HIGH_SCHOOL = "HIGH_SCHOOL"
+    ASSOCIATE = "ASSOCIATE"
+    BACHELOR = "BACHELOR"
+    MASTER = "MASTER"
+    PHD = "PHD"
+    OTHER = "OTHER"
 
 class Candidate(Base):
     __tablename__ = "candidates"

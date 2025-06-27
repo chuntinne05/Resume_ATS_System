@@ -79,12 +79,65 @@ async def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Candidate not found")
     
     return {
-        **candidate.__dict__,
-        "education": [edu.__dict__ for edu in candidate.education],
-        "experience": [exp.__dict__ for exp in candidate.experience],
-        "skills": [skill.__dict__ for skill in candidate.skills],
-        "projects": [proj.__dict__ for proj in candidate.projects],
-        "certifications": [cert.__dict__ for cert in candidate.certifications]
+        "id": candidate.id,
+        "full_name": candidate.full_name,
+        "email": candidate.email,
+        "phone": candidate.phone,
+        "address": candidate.address,
+        "overall_score": float(candidate.overall_score) if candidate.overall_score else 0.0,
+        "classification": candidate.classification,
+        "experience_level": candidate.experience_level.value if candidate.experience_level else None,
+        "status": candidate.status.value if candidate.status else None,
+        "created_at": candidate.created_at,
+        "original_filename": candidate.original_filename,
+        "education": [{
+            "degree": edu.degree,
+            "institution": edu.institution,
+            "graduation_year": edu.graduation_year,
+            "gpa": float(edu.gpa) if edu.gpa else None,
+            "major": edu.major,
+            "education_level": edu.education_level.value if edu.education_level else None,
+            "is_primary": edu.is_primary,
+            "created_at": edu.created_at
+        } for edu in candidate.education],
+        "experience": [{
+            "job_title": exp.job_title,
+            "company": exp.company,
+            "start_date": exp.start_date.isoformat() if exp.start_date else None,
+            "end_date": exp.end_date.isoformat() if exp.end_date else None,
+            "is_current": exp.is_current,
+            "responsibilities": exp.responsibilities,
+            "achievements": exp.achievements,
+            "created_at": exp.created_at
+        } for exp in candidate.experience],
+        "skills": [{
+            "skill_name": skill.skill_name,
+            "skill_category": skill.skill_category.value if skill.skill_category else None,
+            "proficiency_level": skill.proficiency_level.value if skill.proficiency_level else None,
+            "years_experience": skill.years_experience,
+            "is_verified": skill.is_verified,
+            "created_at": skill.created_at
+        } for skill in candidate.skills],
+        "projects": [{
+            "project_name": proj.project_name,
+            "description": proj.description,
+            "technologies": proj.technologies,
+            "project_url": proj.project_url,
+            "github_url": proj.github_url,
+            "start_date": proj.start_date.isoformat() if proj.start_date else None,
+            "end_date": proj.end_date.isoformat() if proj.end_date else None,
+            "created_at": proj.created_at
+        } for proj in candidate.projects],
+        "certifications": [{
+            "certification_name": cert.certification_name,
+            "issuing_organization": cert.issuing_organization,
+            "issue_date": cert.issue_date.isoformat() if cert.issue_date else None,
+            "expiry_date": cert.expiry_date.isoformat() if cert.expiry_date else None,
+            "credential_id": cert.credential_id,
+            "verification_url": cert.verification_url,
+            "is_active": cert.is_active,
+            "created_at": cert.created_at
+        } for cert in candidate.certifications]
     }
 
 @router.put("/{candidate_id}/status")
