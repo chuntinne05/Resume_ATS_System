@@ -19,10 +19,8 @@ class ResumeProcessor:
         self.logger = logging.getLogger(__name__)
     
     async def process_batch(self, file_data: List[Tuple[str, bytes]], batch_name: str = None) -> str:
-        """Process a batch of resume files"""
         batch_id = str(uuid.uuid4())
         
-        # Create batch record
         db = SessionLocal()
         try:
             batch = ProcessingBatch(
@@ -34,8 +32,6 @@ class ResumeProcessor:
             db.add(batch)
             db.commit()
             
-            # Process files asynchronously
-            # asyncio.create_task(self._process_files_async(batch_id, file_data))
             await self._process_files_async(batch_id, file_data) 
             return batch_id
             
@@ -47,7 +43,6 @@ class ResumeProcessor:
             db.close()
     
     async def _process_files_async(self, batch_id: str, file_data: List[Tuple[str, bytes]]):
-        """Process files asynchronously"""
         db = SessionLocal()
         try:
             batch = db.query(ProcessingBatch).filter(ProcessingBatch.batch_id == batch_id).first()
@@ -66,7 +61,6 @@ class ResumeProcessor:
                     else:
                         failed_count += 1
                         
-                    # Update progress
                     batch.processed_files += 1
                     batch.successful_files = successful_count
                     batch.failed_files = failed_count
@@ -81,7 +75,6 @@ class ResumeProcessor:
                     batch.failed_files = failed_count
                     db.commit()
             
-            # Complete batch
             batch.status = BatchStatus.COMPLETED
             batch.completed_at = datetime.now()
             db.commit()
@@ -96,7 +89,6 @@ class ResumeProcessor:
             db.close()
     
     async def _process_single_file(self, db: Session, batch_id: str, filename: str, file_content: bytes) -> bool:
-        """Process a single resume file"""
         start_time = datetime.now()
         
         try:
@@ -147,7 +139,6 @@ class ResumeProcessor:
                 return False
             self.logger.info(f"Ollama processing completed for {filename}")
             
-            # Save candidate data
             self.logger.info(f"Creating candidate from extracted data for {filename}")
             candidate = self._create_candidate_from_data(
                 db, llm_result.data, filename, s3_result['s3_key']
@@ -193,7 +184,6 @@ class ResumeProcessor:
             return False
     
     def _create_candidate_from_data(self, db: Session, data: Dict[str, Any], filename: str, s3_key: str) -> Candidate:
-        """Create candidate record from extracted data"""
         personal_info = data.get('personal_info', {})
 
         email = personal_info.get('email')
@@ -241,7 +231,6 @@ class ResumeProcessor:
             db.add(education)
         print(f"Added education: {edu_data.get('degree')} for candidate ID: {candidate.id}")
         
-        # Add experience records
         for exp_data in data.get('experience', []):
             experience = Experience(
                 candidate_id=candidate.id,
@@ -256,7 +245,6 @@ class ResumeProcessor:
             db.add(experience)
         print(f"Added experience: {exp_data.get('job_title')} at {exp_data.get('company')} for candidate ID: {candidate.id}")
         
-        # Add skills
         for skill_data in data.get('skills', []):
             skill = Skill(
                 candidate_id=candidate.id,
@@ -268,7 +256,6 @@ class ResumeProcessor:
             db.add(skill)
         print(f"Added skill: {skill_data.get('skill_name')} for candidate ID: {candidate.id}")
         
-        # Add projects
         for project_data in data.get('projects', []):
             project = Project(
                 candidate_id=candidate.id,
@@ -283,7 +270,6 @@ class ResumeProcessor:
             db.add(project)
         print(f"Added project: {project_data.get('project_name')} for candidate ID: {candidate.id}")
         
-        # Add certifications
         for cert_data in data.get('certifications', []):
             certification = Certification(
                 candidate_id=candidate.id,
@@ -298,12 +284,10 @@ class ResumeProcessor:
         return candidate
     
     def _parse_date(self, date_str: str):
-        """Parse date string to date object"""
         if not date_str:
             return None
         
         try:
-            # Try different date formats
             formats = ['%Y-%m-%d', '%Y-%m', '%Y', '%m/%d/%Y', '%d/%m/%Y']
             for fmt in formats:
                 try:
@@ -315,19 +299,15 @@ class ResumeProcessor:
             return None
         
     def _extract_year(self, year_input: Any) -> int:
-        """Extract year from various input formats"""
         if not year_input:
             return None
         
         try:
-            # If input is already an integer
             if isinstance(year_input, int):
                 return year_input
             
-            # Convert to string for processing
             year_str = str(year_input)
             
-            # Handle YYYY-MM or YYYY formats
             if '-' in year_str:
                 return int(year_str.split('-')[0])
             return int(year_str)
@@ -335,7 +315,6 @@ class ResumeProcessor:
             return None
     
     def _map_education_level(self, level_str: str) -> EducationLevel:
-        """Map education level string to enum"""
         if not level_str:
             return EducationLevel.OTHER
         
@@ -351,7 +330,6 @@ class ResumeProcessor:
         return level_mapping.get(level_str.lower(), EducationLevel.OTHER)
     
     def _map_skill_category(self, category_str: str) -> SkillCategory:
-        """Map skill category string to enum"""
         if not category_str:
             return SkillCategory.TECHNICAL
         
@@ -367,7 +345,6 @@ class ResumeProcessor:
         return category_mapping.get(category_str.lower(), SkillCategory.TECHNICAL)
     
     def _map_proficiency_level(self, level_str: str) -> ProficiencyLevel:
-        """Map proficiency level string to enum"""
         if not level_str:
             return ProficiencyLevel.INTERMEDIATE
         
@@ -380,5 +357,4 @@ class ResumeProcessor:
         
         return level_mapping.get(level_str.lower(), ProficiencyLevel.INTERMEDIATE)
 
-# Singleton instance
 resume_processor = ResumeProcessor()

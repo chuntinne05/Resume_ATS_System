@@ -1,16 +1,12 @@
-// static/js/dashboard.js
 
-// Hiển thị loading
 function showLoading() {
     document.querySelector('#loading').style.display = 'block';
 }
 
-// Ẩn loading
 function hideLoading() {
     document.querySelector('#loading').style.display = 'none';
 }
 
-// Lấy danh sách ứng viên từ API
 async function fetchCandidates() {
     showLoading();
     try {
@@ -28,7 +24,6 @@ async function fetchCandidates() {
     }
 }
 
-// Lấy thống kê dashboard từ API
 async function fetchDashboardStats() {
     try {
         const response = await fetch('/api/dashboard/stats');
@@ -42,7 +37,6 @@ async function fetchDashboardStats() {
     }
 }
 
-// Cập nhật bảng ứng viên
 function updateCandidateTable(candidates) {
     const tableBody = document.querySelector('#candidate-table-body');
     tableBody.innerHTML = ''; // Xóa các hàng hiện có
@@ -62,11 +56,9 @@ function updateCandidateTable(candidates) {
         `;
         tableBody.appendChild(row);
     });
-    // Cập nhật số lượng hiển thị (nếu cần)
     document.querySelector('.showing-text').textContent = `Hiển thị ${candidates.length} trong số ${candidates.length} ứng viên`;
 }
 
-// Cập nhật thẻ thống kê
 function updateStatsCards(stats) {
     document.querySelector('#total-candidates').textContent = stats.total_candidates;
     document.querySelector('#approved-candidates').textContent = stats.approved_candidates;
@@ -74,7 +66,6 @@ function updateStatsCards(stats) {
     document.querySelector('#average-score').textContent = stats.average_score.toFixed(2);
 }
 
-// Tìm kiếm và lọc ứng viên
 async function searchCandidates() {
     const searchTerm = document.querySelector('#search-input').value;
     const status = document.querySelector('#status-filter').value;
@@ -134,7 +125,6 @@ async function viewCandidate(candidateId) {
         document.querySelector('#candidate-score').textContent = candidate.overall_score;
         document.querySelector('#candidate-classification').textContent = candidate.classification || 'N/A';
         
-        // Cập nhật danh sách kỹ năng
         const skillsList = document.querySelector('#skills-list');
         skillsList.innerHTML = '';
         if (candidate.skills && candidate.skills.length > 0) {
@@ -147,7 +137,6 @@ async function viewCandidate(candidateId) {
             skillsList.innerHTML = '<li>No skills found</li>';
         }
         
-        // Cập nhật danh sách kinh nghiệm
         const experienceList = document.querySelector('#experience-list');
         experienceList.innerHTML = '';
         if (candidate.experience && candidate.experience.length > 0) {
@@ -160,7 +149,6 @@ async function viewCandidate(candidateId) {
             experienceList.innerHTML = '<li>No experience found</li>';
         }
         
-        // Cập nhật danh sách học vấn
         const educationList = document.querySelector('#education-list');
         educationList.innerHTML = '';
         if (candidate.education && candidate.education.length > 0) {
@@ -173,7 +161,6 @@ async function viewCandidate(candidateId) {
             educationList.innerHTML = '<li>No education found</li>';
         }
         
-        // Hiển thị modal
         document.querySelector('#candidate-modal').style.display = 'block';
     } catch (error) {
         console.error('Lỗi khi xem chi tiết:', error);
@@ -181,7 +168,6 @@ async function viewCandidate(candidateId) {
     }
 }
 
-// Xóa ứng viên
 async function deleteCandidate(candidateId) {
     if (confirm('Bạn có chắc muốn xóa ứng viên này không?')) {
         try {
@@ -217,7 +203,89 @@ async function checkBatchStatus(batchId) {
     }
 }
 
-// Xử lý tải lên resume
+async function fetchJobRequirements() {
+    try {
+        const response = await fetch('/api/dashboard/job-requirements');
+        if (!response.ok) throw new Error('Không thể tải job requirements');
+        const jobReqs = await response.json();
+        const select = document.querySelector('#job-requirement-select');
+        select.innerHTML = '<option value="">Chọn Job Requirement</option>';
+        jobReqs.forEach(jr => {
+            const option = document.createElement('option');
+            option.value = jr.id;
+            option.textContent = jr.job_title;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Lỗi khi lấy job requirements:', error);
+        alert('Không thể tải job requirements.');
+    }
+}
+
+async function fetchMatchResults(jobId) {
+    showLoading();
+    try {
+        const response = await fetch(`/api/dashboard/match-results/${jobId}`);
+        if (!response.ok) throw new Error('Không thể tải kết quả matching');
+        const data = await response.json();
+        const matchResults = document.querySelector('#match-results');
+        matchResults.innerHTML = '<h3 class="text-lg font-semibold text-gray-800 mb-2">Top Matching Candidates</h3>';
+        if (data.matches.length === 0) {
+            matchResults.innerHTML += '<p class="text-gray-600">Không tìm thấy ứng viên phù hợp.</p>';
+        } else {
+            matchResults.innerHTML += `
+                <ul class="list-disc pl-5 space-y-2">
+                    ${data.matches.map(match => `
+                        <li>
+                            <strong>${match.candidate.full_name}</strong> (${match.candidate.email}) - 
+                            Score: ${match.match_score}% 
+                            (Skills: ${match.skill_match}%, Experience: ${match.experience_match}%, Education: ${match.education_match}%)
+                            <button onclick="viewCandidate(${match.candidate.id})" class="ml-2 text-blue-500 hover:underline">View</button>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+        }
+    } catch (error) {
+        console.error('Lỗi khi lấy kết quả matching:', error);
+        alert('Không thể tải kết quả matching.');
+    } finally {
+        hideLoading();
+    }
+}
+
+async function createJobRequirement(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const jobData = {
+        job_title: formData.get('job_title'),
+        required_skills: formData.get('required_skills').split(',').map(s => s.trim()).filter(s => s),
+        preferred_skills: formData.get('preferred_skills').split(',').map(s => s.trim()).filter(s => s),
+        min_experience_years: parseInt(formData.get('min_experience_years') || 0),
+        education_requirements: {
+            level: formData.get('education_level'),
+            major: ''
+        }
+    };
+
+    try {
+        const response = await fetch('/api/requirements', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(jobData)
+        });
+        if (!response.ok) throw new Error('Tạo job requirement thất bại');
+        alert('Tạo job requirement thành công!');
+        document.querySelector('#create-job-modal').style.display = 'none';
+        form.reset();
+        fetchJobRequirements();
+    } catch (error) {
+        console.error('Lỗi khi tạo job requirement:', error);
+        alert('Tạo job requirement thất bại.');
+    }
+}
+
 document.querySelector('#upload-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const formData = new FormData(event.target);
@@ -242,25 +310,100 @@ document.querySelector('#upload-form').addEventListener('submit', async (event) 
     }
 });
 
-// Khởi tạo dashboard khi trang tải
-document.addEventListener('DOMContentLoaded', () => {
-    fetchCandidates();
-    fetchDashboardStats();
-});
+document.querySelector('#create-job-form').addEventListener('submit', createJobRequirement);
 
-// Nút làm mới
 document.querySelector('#refresh-button').addEventListener('click', () => {
     fetchCandidates();
     fetchDashboardStats();
+    fetchJobRequirements();
 });
 
-// Đóng modal khi nhấn nút Close
-document.querySelector('#candidate-modal .modal-close').addEventListener('click', () => {
-    document.querySelector('#candidate-modal').style.display = 'none';
+document.querySelector('#upload-resume-button').addEventListener('click', () => {
+    document.querySelector('#upload-modal').style.display = 'flex';
 });
 
-// Đóng modal tải lên khi nhấn Cancel
+document.querySelector('#create-job-button').addEventListener('click', () => {
+    document.querySelector('#create-job-modal').style.display = 'flex';
+});
+
+document.querySelector('#create-job-cancel').addEventListener('click', () => {
+    document.querySelector('#create-job-modal').style.display = 'none';
+    document.querySelector('#create-job-form').reset();
+});
+
 document.querySelector('#upload-cancel').addEventListener('click', () => {
     document.querySelector('#upload-modal').style.display = 'none';
 });
 
+document.querySelector('#candidate-modal .modal-close').addEventListener('click', () => {
+    document.querySelector('#candidate-modal').style.display = 'none';
+});
+
+document.querySelector('#match-button').addEventListener('click', () => {
+    const jobId = document.querySelector('#job-requirement-select').value;
+    if (jobId) fetchMatchResults(jobId);
+    else alert('Vui lòng chọn một Job Requirement.');
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchCandidates();
+    fetchDashboardStats();
+    fetchJobRequirements();
+});
+
+document.querySelector('#create-job-button').addEventListener('click', () => {
+    document.querySelector('#job-modal').style.display = 'block';
+});
+
+document.querySelector('#job-modal .modal-close').addEventListener('click', () => {
+    document.querySelector('#job-modal').style.display = 'none';
+});
+
+document.querySelector('#job-cancel').addEventListener('click', () => {
+    document.querySelector('#job-modal').style.display = 'none';
+});
+
+document.querySelector('#job-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    showLoading();
+    try {
+        const form = event.target;
+        const jobTitle = form.job_title.value;
+        const requiredSkills = form.required_skills.value.split(',').map(s => s.trim()).filter(s => s);
+        const preferredSkills = form.preferred_skills.value.split(',').map(s => s.trim()).filter(s => s);
+        const minExperienceYears = parseInt(form.min_experience_years.value);
+        let educationRequirements;
+        try {
+            educationRequirements = JSON.parse(form.education_requirements.value);
+        } catch (e) {
+            throw new Error('Invalid JSON format for education requirements');
+        }
+
+        const response = await fetch('/api/jobs/requirements', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                job_title: jobTitle,
+                required_skills: requiredSkills,
+                preferred_skills: preferredSkills,
+                min_experience_years: minExperienceYears,
+                education_requirements: educationRequirements,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create job requirement');
+        }
+
+        alert('Job requirement created successfully');
+        document.querySelector('#job-modal').style.display = 'none';
+        form.reset();
+    } catch (error) {
+        console.error('Error creating job:', error);
+        alert(`Failed to create job: ${error.message}`);
+    } finally {
+        hideLoading();
+    }
+});

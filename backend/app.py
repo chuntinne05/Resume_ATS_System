@@ -9,10 +9,8 @@ import os
 
 app = FastAPI()
 
-# Serve static files
 app.mount("/", StaticFiles(directory="../frontend", html=True), name="frontend")
 
-# Dependency để lấy database session
 def get_db():
     db = SessionLocal()
     try:

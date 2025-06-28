@@ -42,3 +42,14 @@ async def get_dashboard_stats(db: Session = Depends(get_db)):
         "recent_batches": recent_batches
     }
 
+
+@router.get("/job-requirements")
+async def get_job_requirements_for_dashboard(db: Session = Depends(get_db)):
+    job_reqs = db.query(JobRequirement).all()
+    return [{"id": jr.id, "job_title": jr.job_title} for jr in job_reqs]
+
+@router.get("/match-results/{job_id}")
+async def get_match_results(job_id: int, db: Session = Depends(get_db)):
+    from api.routes.jobs import match_candidates  
+    return await match_candidates(job_id, db)
+

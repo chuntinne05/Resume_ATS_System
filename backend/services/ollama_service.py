@@ -144,14 +144,13 @@ Resume text:
 """
 
     def _call_ollama(self, prompt: str) -> Optional[str]:
-        """Gọi Ollama API"""
         try:
             payload = {
                 "model": self.model,
                 "prompt": prompt,
                 "stream": False,
                 "options": {
-                    "temperature": 0.1,  # Giảm temperature để có kết quả ổn định hơn
+                    "temperature": 0.1,  
                     "top_k": 40,
                     "top_p": 0.9,
                     "num_predict": 2048
@@ -180,9 +179,7 @@ Resume text:
             return None
     
     def _parse_response(self, response: str) -> Dict[str, Any]:
-        """Parse JSON response từ LLM"""
         try:
-            # Tìm và extract JSON từ response
             start_idx = response.find('{')
             end_idx = response.rfind('}') + 1
             
@@ -195,14 +192,12 @@ Resume text:
                 
         except json.JSONDecodeError as e:
             self.logger.error(f"JSON decode error: {str(e)}")
-            # Fallback: extract thông tin cơ bản bằng regex
             return self._fallback_extraction(response)
         except Exception as e:
             self.logger.error(f"Response parsing error: {str(e)}")
             return {}
     
     def _fallback_extraction(self, text: str) -> Dict[str, Any]:
-        """Backup extraction method using regex"""
         import re
         
         result = {
@@ -230,11 +225,9 @@ Resume text:
         return result
     
     def _calculate_confidence(self, extracted_data: Dict[str, Any]) -> float:
-        """Tính confidence score dựa trên completeness của data"""
         total_fields = 0
         filled_fields = 0
         
-        # Check personal info
         personal_info = extracted_data.get("personal_info", {})
         important_personal_fields = ["full_name", "email", "phone"]
         for field in important_personal_fields:
@@ -242,19 +235,16 @@ Resume text:
             if personal_info.get(field):
                 filled_fields += 1
         
-        # Check education
         education = extracted_data.get("education", [])
         if education:
             total_fields += 1
             filled_fields += 1
         
-        # Check experience
         experience = extracted_data.get("experience", [])
         if experience:
             total_fields += 1
             filled_fields += 1
         
-        # Check skills
         skills = extracted_data.get("skills", [])
         if skills:
             total_fields += 1
@@ -262,12 +252,10 @@ Resume text:
         
         return round(filled_fields / total_fields, 2) if total_fields > 0 else 0.0
 
-# Configuration
 OLLAMA_CONFIG = {
     'host': os.getenv('OLLAMA_HOST', 'localhost'),
     'port': int(os.getenv('OLLAMA_PORT', 11434)),
     'model': os.getenv('OLLAMA_MODEL', 'llama3.2:3b')
 }
 
-# Singleton instance
 ollama_service = OllamaService(**OLLAMA_CONFIG)

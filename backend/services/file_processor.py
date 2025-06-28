@@ -20,7 +20,6 @@ class FileProcessor:
         )
     
     def extract_text_from_file(self, file_content: bytes, filename: str, s3_key: str) -> Dict[str, Any]:
-        """Extract text from uploaded file"""
         file_extension = os.path.splitext(filename)[1].lower()
         
         try:
@@ -44,12 +43,10 @@ class FileProcessor:
             }
     
     def _extract_from_pdf(self, file_content: bytes) -> Dict[str, Any]:
-        """Extract text from PDF"""
         text = ""
         page_count = 0
         
         try:
-            # Method 1: pdfplumber (more accurate)
             with tempfile.NamedTemporaryFile() as temp_file:
                 temp_file.write(file_content)
                 temp_file.flush()
@@ -61,7 +58,6 @@ class FileProcessor:
                         if page_text:
                             text += page_text + "\n"
             
-            # Fallback: PyPDF2
             if not text.strip():
                 with tempfile.NamedTemporaryFile() as temp_file:
                     temp_file.write(file_content)
@@ -88,7 +84,6 @@ class FileProcessor:
             }
     
     def _extract_from_docx(self, file_content: bytes) -> Dict[str, Any]:
-        """Extract text from DOCX"""
         try:
             with tempfile.NamedTemporaryFile() as temp_file:
                 temp_file.write(file_content)
@@ -100,7 +95,6 @@ class FileProcessor:
                 for paragraph in doc.paragraphs:
                     text += paragraph.text + "\n"
                 
-                # Extract text from tables
                 for table in doc.tables:
                     for row in table.rows:
                         for cell in row.cells:
@@ -122,7 +116,6 @@ class FileProcessor:
             }
     
     def _extract_from_image(self, file_content: bytes, s3_key: str) -> Dict[str, Any]:
-        """Extract text from image using AWS Textract and Tesseract fallback"""
         try:
             # Try AWS Textract first
             textract_result = self._extract_with_textract(s3_key)
@@ -139,7 +132,6 @@ class FileProcessor:
             }
     
     def _extract_with_textract(self, s3_key: str) -> Dict[str, Any]:
-        """Extract text using AWS Textract"""
         try:
             response = self.textract_client.detect_document_text(
                 Document={
@@ -169,7 +161,6 @@ class FileProcessor:
             return {'success': False, 'error': str(e)}
     
     def _extract_with_tesseract(self, file_content: bytes) -> Dict[str, Any]:
-        """Extract text using Tesseract OCR"""
         try:
             with tempfile.NamedTemporaryFile() as temp_file:
                 temp_file.write(file_content)

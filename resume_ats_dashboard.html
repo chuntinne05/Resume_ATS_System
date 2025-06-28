@@ -209,6 +209,45 @@
         </div>
     </div>
 
+    <div id="create-job-modal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Create Job Requirement</h2>
+            <form id="create-job-form">
+                <div class="mb-4">
+                    <label for="job-title" class="block text-gray-700">Job Title</label>
+                    <input id="job-title" name="job_title" type="text" required class="border rounded-lg p-2 w-full">
+                </div>
+                <div class="mb-4">
+                    <label for="required-skills" class="block text-gray-700">Required Skills (comma-separated)</label>
+                    <input id="required-skills" name="required_skills" type="text" class="border rounded-lg p-2 w-full">
+                </div>
+                <div class="mb-4">
+                    <label for="preferred-skills" class="block text-gray-700">Preferred Skills (comma-separated)</label>
+                    <input id="preferred-skills" name="preferred_skills" type="text" class="border rounded-lg p-2 w-full">
+                </div>
+                <div class="mb-4">
+                    <label for="min-experience" class="block text-gray-700">Minimum Experience (Years)</label>
+                    <input id="min-experience" name="min_experience_years" type="number" min="0" class="border rounded-lg p-2 w-full">
+                </div>
+                <div class="mb-4">
+                    <label for="education-level" class="block text-gray-700">Education Level</label>
+                    <select id="education-level" name="education_level" class="border rounded-lg p-2 w-full">
+                        <option value="HIGH_SCHOOL">High School</option>
+                        <option value="ASSOCIATE">Associate</option>
+                        <option value="BACHELOR">Bachelor</option>
+                        <option value="MASTER">Master</option>
+                        <option value="PHD">PhD</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button id="create-job-cancel" type="button" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancel</button>
+                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="candidateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
         <div class="flex items-center justify-center min-h-screen">
             <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">

@@ -22,7 +22,6 @@ class S3Service:
         self.cloudfront_domain = os.getenv('CLOUDFRONT_DOMAIN', '')
 
     def upload_file(self, file_content: bytes, filename: str, content_type: str = None) -> Dict[str, Any]:
-        """Upload file to S3"""
         try:
             file_extension = Path(filename).suffix
             unique_filename = f"{uuid.uuid4()}{file_extension}"
@@ -44,7 +43,6 @@ class S3Service:
                 }
             )
             
-            # Generate URLs
             s3_url = f"https://{self.bucket_name}.s3.amazonaws.com/{s3_key}"
             cdn_url = f"https://{self.cloudfront_domain}/{s3_key}" if self.cloudfront_domain else s3_url
             
@@ -64,7 +62,6 @@ class S3Service:
             }
         
     def download_file(self, s3_key: str) -> Optional[bytes]:
-        """Download file from S3"""
         try:
             response = self.s3_client.get_object(Bucket=self.bucket_name, Key=s3_key)
             return response['Body'].read()
@@ -72,7 +69,6 @@ class S3Service:
             return None
     
     def delete_file(self, s3_key: str) -> bool:
-        """Delete file from S3"""
         try:
             self.s3_client.delete_object(Bucket=self.bucket_name, Key=s3_key)
             return True
@@ -80,7 +76,6 @@ class S3Service:
             return False
     
     def generate_presigned_url(self, s3_key: str, expiration: int = 3600) -> Optional[str]:
-        """Generate presigned URL for file access"""
         try:
             url = self.s3_client.generate_presigned_url(
                 'get_object',
