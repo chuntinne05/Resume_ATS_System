@@ -103,7 +103,22 @@ async function searchCandidates() {
     }
 }
 
-// Xem chi tiết ứng viên
+async function updateStatus(candidateId, newStatus) {
+    const upperStatus = newStatus.toUpperCase();
+    try {
+        const response = await fetch(`/api/candidates/${candidateId}/status?status=${upperStatus}`, {
+            method: 'PUT'
+        });
+        if (!response.ok) {
+            throw new Error('Cập nhật trạng thái thất bại');
+        }
+        alert('Cập nhật trạng thái thành công');
+    } catch (error) {
+        console.error('Lỗi khi cập nhật trạng thái:', error);
+        alert('Cập nhật trạng thái thất bại.');
+    }
+}
+
 async function viewCandidate(candidateId) {
     try {
         const response = await fetch(`/api/candidates/${candidateId}`);
@@ -111,8 +126,54 @@ async function viewCandidate(candidateId) {
             throw new Error('Không thể tải chi tiết ứng viên');
         }
         const candidate = await response.json();
+        
         document.querySelector('#candidate-name').textContent = candidate.full_name;
-        document.querySelector('#candidate-email').textContent = candidate.email;
+        document.querySelector('#candidate-email').textContent = candidate.email || 'N/A';
+        document.querySelector('#candidate-phone').textContent = candidate.phone || 'N/A';
+        document.querySelector('#candidate-address').textContent = candidate.address || 'N/A';
+        document.querySelector('#candidate-score').textContent = candidate.overall_score;
+        document.querySelector('#candidate-classification').textContent = candidate.classification || 'N/A';
+        
+        // Cập nhật danh sách kỹ năng
+        const skillsList = document.querySelector('#skills-list');
+        skillsList.innerHTML = '';
+        if (candidate.skills && candidate.skills.length > 0) {
+            candidate.skills.forEach(skill => {
+                const li = document.createElement('li');
+                li.textContent = `${skill.skill_name} (${skill.proficiency_level})`;
+                skillsList.appendChild(li);
+            });
+        } else {
+            skillsList.innerHTML = '<li>No skills found</li>';
+        }
+        
+        // Cập nhật danh sách kinh nghiệm
+        const experienceList = document.querySelector('#experience-list');
+        experienceList.innerHTML = '';
+        if (candidate.experience && candidate.experience.length > 0) {
+            candidate.experience.forEach(exp => {
+                const li = document.createElement('li');
+                li.textContent = `${exp.job_title} tại ${exp.company} (${exp.start_date} - ${exp.end_date || 'Hiện tại'})`;
+                experienceList.appendChild(li);
+            });
+        } else {
+            experienceList.innerHTML = '<li>No experience found</li>';
+        }
+        
+        // Cập nhật danh sách học vấn
+        const educationList = document.querySelector('#education-list');
+        educationList.innerHTML = '';
+        if (candidate.education && candidate.education.length > 0) {
+            candidate.education.forEach(edu => {
+                const li = document.createElement('li');
+                li.textContent = `${edu.degree} chuyên ngành ${edu.major} tại ${edu.institution} (${edu.graduation_year})`;
+                educationList.appendChild(li);
+            });
+        } else {
+            educationList.innerHTML = '<li>No education found</li>';
+        }
+        
+        // Hiển thị modal
         document.querySelector('#candidate-modal').style.display = 'block';
     } catch (error) {
         console.error('Lỗi khi xem chi tiết:', error);
@@ -138,7 +199,6 @@ async function deleteCandidate(candidateId) {
     }
 }
 
-// static/js/dashboard.js
 async function checkBatchStatus(batchId) {
     try {
         const response = await fetch(`/api/batches/${batchId}/status`);

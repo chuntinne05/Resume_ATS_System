@@ -42,7 +42,6 @@ async def get_candidates(
     min_score: Optional[float] = Query(None, ge=0, le=100),
     db: Session = Depends(get_db)
 ):
-    """Get all candidates with filtering and pagination"""
     query = db.query(Candidate)
     
     if search:
@@ -66,7 +65,6 @@ async def get_candidates(
 
 @router.get("/{candidate_id}", response_model=CandidateDetailResponse)
 async def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
-    """Get candidate details"""
     candidate = db.query(Candidate).options(
         joinedload(Candidate.education),
         joinedload(Candidate.experience),
@@ -146,14 +144,14 @@ async def update_candidate_status(
     status: str,
     db: Session = Depends(get_db)
 ):
-    """Update candidate status"""
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
     
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
     
     try:
-        candidate.status = CandidateStatus(status)
+        status_upper = status.upper()  
+        candidate.status = CandidateStatus(status_upper)  
         db.commit()
         return {"message": "Status updated successfully"}
     except ValueError:
@@ -161,13 +159,11 @@ async def update_candidate_status(
 
 @router.delete("/{candidate_id}")
 async def delete_candidate(candidate_id: int, db: Session = Depends(get_db)):
-    """Delete candidate"""
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
     
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
     
-    # Delete S3 file if exists
     if candidate.s3_file_key:
         from backend.services.s3_service import s3_service
         s3_service.delete_file(candidate.s3_file_key)

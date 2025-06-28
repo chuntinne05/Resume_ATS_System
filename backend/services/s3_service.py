@@ -18,7 +18,7 @@ class S3Service:
             aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY'),
             region_name=os.getenv('AWS_REGION', 'ap-southeast-1')
         )
-        self.bucket_name = os.getenv('S3_BUCKET_NAME', 'resume-ats-files')
+        self.bucket_name = os.getenv('S3_BUCKET_NAME', 'bucketchuaresume')
         self.cloudfront_domain = os.getenv('CLOUDFRONT_DOMAIN', '')
 
     def upload_file(self, file_content: bytes, filename: str, content_type: str = None) -> Dict[str, Any]:

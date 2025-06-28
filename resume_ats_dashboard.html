@@ -10,7 +10,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <!-- Navigation -->
     <nav class="bg-white shadow-lg border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
@@ -30,9 +29,7 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Dashboard Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div class="flex items-center justify-between">
@@ -80,7 +77,6 @@
             </div>
         </div>
 
-        <!-- Filters -->
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
@@ -97,20 +93,20 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                     <select id="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="filterCandidates()">
                         <option value="">All Status</option>
-                        <option value="New">New</option>
-                        <option value="Reviewed">Reviewed</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
+                        <option value="NEW">New</option>
+                        <option value="REVIEWED">Reviewed</option>
+                        <option value="APPROVED">Approved</option>
+                        <option value="REJECTED">Rejected</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Experience Level</label>
                     <select id="experienceFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="filterCandidates()">
                         <option value="">All Levels</option>
-                        <option value="Entry">Entry</option>
-                        <option value="Mid">Mid</option>
-                        <option value="Senior">Senior</option>
-                        <option value="Lead">Lead</option>
+                        <option value="ENTRY">Entry</option>
+                        <option value="MID">Mid</option>
+                        <option value="SENIOR">Senior</option>
+                        <option value="LEAD">Lead</option>
                     </select>
                 </div>
                 <div>
@@ -128,7 +124,6 @@
             </div>
         </div>
 
-        <!-- Candidates Table -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-800">Candidates</h2>
@@ -168,7 +163,6 @@
         </div>
     </div>
 
-    <!-- Upload Modal -->
     <div id="uploadModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
         <div class="flex items-center justify-center min-h-screen">
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
@@ -215,7 +209,6 @@
         </div>
     </div>
 
-    <!-- Candidate Detail Modal -->
     <div id="candidateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
         <div class="flex items-center justify-center min-h-screen">
             <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
@@ -226,14 +219,12 @@
                     </button>
                 </div>
                 <div id="candidateDetails" class="p-6">
-                    <!-- Dynamic content -->
                 </div>
             </div>
         </div>
     </div>
     <script src="/static/js/dashboard.js"></script>
     <script>
-        // Global variables
         let currentPage = 1;
         let totalPages = 1;
         let currentCandidates = [];
@@ -241,13 +232,11 @@
         let searchTimeout;
         const API_BASE = 'http://localhost:8000/api';
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadDashboardStats();
             loadCandidates();
         });
 
-        // API Functions
         async function loadDashboardStats() {
             try {
                 const response = await axios.get(`${API_BASE}/dashboard/stats`);
@@ -320,7 +309,6 @@
             }
         }
 
-        // Render Functions
         function renderCandidates(candidates) {
             const tbody = document.getElementById('candidatesTableBody');
             tbody.innerHTML = '';
@@ -408,7 +396,6 @@
             return `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${colorClass}">${level}</span>`;
         }
 
-        // Modal Functions
         function showUploadModal() {
             document.getElementById('uploadModal').classList.remove('hidden');
         }
@@ -500,7 +487,6 @@
             `;
         }
 
-        // Upload Functions
         async function uploadFiles() {
             const fileInput = document.getElementById('fileInput');
             const batchName = document.getElementById('batchName').value;
@@ -564,7 +550,6 @@
             }
         }
 
-        // Filter Functions
         function debounceSearch() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
@@ -597,7 +582,6 @@
             updatePagination();
         }
 
-        // Pagination Functions
         function updatePagination() {
             const itemsPerPage = 20;
             totalPages = Math.ceil(currentCandidates.length / itemsPerPage);
@@ -637,7 +621,6 @@
             }
         }
 
-        // Utility Functions
         function formatDate(dateString) {
             if (!dateString) return 'N/A';
             const date = new Date(dateString);
@@ -649,7 +632,6 @@
         }
 
         function showNotification(message, type = 'info') {
-            // Create notification element
             const notification = document.createElement('div');
             notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 transition-all duration-300 transform translate-x-full`;
             
@@ -673,12 +655,10 @@
             
             document.body.appendChild(notification);
             
-            // Animate in
             setTimeout(() => {
                 notification.classList.remove('translate-x-full');
             }, 100);
             
-            // Auto remove after 5 seconds
             setTimeout(() => {
                 notification.classList.add('translate-x-full');
                 setTimeout(() => {
@@ -695,28 +675,23 @@
             loadCandidates();
         }
 
-        // Keyboard shortcuts
         document.addEventListener('keydown', function(e) {
-            // Escape key to close modals
             if (e.key === 'Escape') {
                 hideUploadModal();
                 hideCandidateModal();
             }
             
-            // Ctrl+U to open upload modal
             if (e.ctrlKey && e.key === 'u') {
                 e.preventDefault();
                 showUploadModal();
             }
             
-            // Ctrl+R to refresh data
             if (e.ctrlKey && e.key === 'r') {
                 e.preventDefault();
                 refreshData();
             }
         });
 
-        // Handle modal clicks outside content
         document.getElementById('uploadModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 hideUploadModal();
@@ -729,15 +704,13 @@
             }
         });
 
-        // Auto-refresh data every 5 minutes
         setInterval(() => {
             loadDashboardStats();
         }, 5 * 60 * 1000);
 
-        // Handle file input change for upload validation
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const files = e.target.files;
-            const maxSize = 10 * 1024 * 1024; // 10MB
+            const maxSize = 10 * 1024 * 1024; 
             const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'image/jpeg', 'image/jpg', 'image/png'];
             
             for (let file of files) {

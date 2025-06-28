@@ -35,9 +35,8 @@ class ResumeProcessor:
             db.commit()
             
             # Process files asynchronously
-            print("test xem co loi o process_batch khong?")
-            asyncio.create_task(self._process_files_async(batch_id, file_data))
-            print("kh co loi o process_batch")
+            # asyncio.create_task(self._process_files_async(batch_id, file_data))
+            await self._process_files_async(batch_id, file_data) 
             return batch_id
             
         except Exception as e:
@@ -51,7 +50,6 @@ class ResumeProcessor:
         """Process files asynchronously"""
         db = SessionLocal()
         try:
-            # Update batch status
             batch = db.query(ProcessingBatch).filter(ProcessingBatch.batch_id == batch_id).first()
             batch.status = BatchStatus.PROCESSING
             batch.started_at = datetime.now()
@@ -59,8 +57,6 @@ class ResumeProcessor:
             
             successful_count = 0
             failed_count = 0
-
-            print("test xem co loi o async khong?")
             
             for filename, content in file_data:
                 try:
@@ -86,7 +82,6 @@ class ResumeProcessor:
                     db.commit()
             
             # Complete batch
-            print("kh co loi o async")
             batch.status = BatchStatus.COMPLETED
             batch.completed_at = datetime.now()
             db.commit()
@@ -105,7 +100,6 @@ class ResumeProcessor:
         start_time = datetime.now()
         
         try:
-            # Create processing log
             log = ProcessingLog(
                 batch_id=batch_id,
                 filename=filename,
@@ -115,48 +109,50 @@ class ResumeProcessor:
             db.add(log)
             db.commit()
             
-            # Upload to S3
+            self.logger.info(f"Uploading {filename} to S3")
             s3_result = s3_service.upload_file(file_content, filename)
             if not s3_result['success']:
+                self.logger.error(f"S3 upload failed for {filename}: {s3_result.get('error')}")
                 log.processing_status = ProcessingStatus.FAILED
                 log.error_message = f"S3 upload failed: {s3_result.get('error')}"
                 db.commit()
                 return False
-            
             log.s3_key = s3_result['s3_key']
+            self.logger.info(f"Uploaded {filename} to S3 with key: {s3_result['s3_key']}")
             
-            # Extract text
+            self.logger.info(f"Extracting text from {filename}")
             extraction_result = file_processor.extract_text_from_file(
                 file_content, filename, s3_result['s3_key']
             )
-            
             if not extraction_result['success']:
+                self.logger.error(f"Text extraction failed for {filename}: {extraction_result.get('error')}")
                 log.processing_status = ProcessingStatus.FAILED
                 log.error_message = f"Text extraction failed: {extraction_result.get('error')}"
                 db.commit()
                 return False
+            self.logger.info(f"Text extracted successfully from {filename}")
             
-            # Process with LLM
+            self.logger.info(f"Calling Ollama for {filename}")
             llm_start_time = datetime.now()
             llm_result = ollama_service.extract_resume_info(extraction_result['text'])
             llm_processing_time = (datetime.now() - llm_start_time).total_seconds()
             
             if not llm_result.success:
+                self.logger.error(f"LLM processing failed for {filename}: {llm_result.error_message}")
                 db.rollback()
                 log.processing_status = ProcessingStatus.FAILED
                 log.error_message = f"LLM processing failed: {llm_result.error_message}"
                 log.llm_response_time = llm_processing_time
                 db.commit()
                 return False
-            
-            print("chỗ này à?")
+            self.logger.info(f"Ollama processing completed for {filename}")
             
             # Save candidate data
+            self.logger.info(f"Creating candidate from extracted data for {filename}")
             candidate = self._create_candidate_from_data(
                 db, llm_result.data, filename, s3_result['s3_key']
             )
-            print("đ phải rồi")
-            # Save extracted text
+            self.logger.info(f"Candidate created with ID: {candidate.id}")
             extracted_text = ExtractedText(
                 candidate_id=candidate.id,
                 raw_text=extraction_result['text'],
@@ -171,19 +167,13 @@ class ResumeProcessor:
                     'extraction_method': extraction_result['extraction_method']
                 }
             )
-            print("2")
             db.add(extracted_text)
-            print("1")
             
-            # Classify candidate
-            # classification_result = ClassificationService.classify_candidate(candidate, db)
             classification_service = ClassificationService()
             classification_result = classification_service.classify_candidate(candidate, db)
             candidate.classification = classification_result['classification']
             candidate.overall_score = classification_result['overall_score']
             candidate.experience_level = classification_result['experience_level']
-            print("xem co loi o classification khong")
-            # Update log
             log.candidate_id = candidate.id
             log.processing_status = ProcessingStatus.SUCCESS
             log.extraction_confidence = llm_result.confidence
